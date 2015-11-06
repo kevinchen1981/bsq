@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hbcun.business.bs.dao.mapper.BusinessBsWmsPurchaseOrderMapper">
+	
+	<select id="getScrollData" resultType="com.hbcun.business.bs.entity.vo.WmsPurchaseOrderVo">
+		SELECT
+		order_code as orderCode, create_time as createTime
+		from bs_wms_purchase_order
+		order by create_time desc
+		limit #{start}, #{pageSize}
+	</select>
+
+	<select id="getScrollDataCounts" resultType="int">
+		SELECT
+		count(*)
+		from bs_wms_purchase_order
+	</select>
+</mapper>

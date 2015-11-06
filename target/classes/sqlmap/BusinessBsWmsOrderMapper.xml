@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hbcun.business.bs.dao.mapper.BusinessBsWmsOrderMapper">
+	
+	<resultMap id="ExportBsOrder" type="com.hbcun.business.bs.entity.vo.ExportBsOrderVo">
+		<result column="user_order_id" property="orderId"/>
+		<result column="user_package_id" property="packageId"/>
+		<result column="create_time" property="createTime"/>
+		<result column="tms_order_code" property="tmsOrderCode"/>
+		<result column="tms_service_code" property="tmsServiceCode"/>
+		<result column="receiver_name" property="receiverName"/>
+		<result column="receiver_mobile" property="receiverMobile"/>
+		<result column="receiver_province" property="receiverProvince"/>
+		<result column="receiver_city" property="receiverCity"/>
+		<result column="receiver_district" property="receiverDistrict"/>
+		<result column="receiver_address" property="receiverAddress"/>
+		<result column="receiver_zipcode" property="receiverZipcode"/>
+		<collection property="productList" ofType="com.hbcun.business.bs.entity.vo.BsProduct">
+			<result column="product_id" property="productId"/>
+			<result column="bar_code" property="barCode"/>
+			<result column="title" property="title"/>
+			<result column="item_qty" property="itemQty"/>
+		</collection>
+	</resultMap>
+
+	<select id="getExportZyOrderList" resultMap="ExportBsOrder">
+		select
+		wms.user_order_id , wms.user_package_id, wms.create_time, wms.tms_order_code, wms.tms_service_code,
+		info.receiver_name, info.receiver_mobile, info.receiver_province, info.receiver_city, info.receiver_district, info.receiver_address, info.receiver_zipcode,
+		p.product_id, p.bar_code, p.title, op.item_qty
+		from bs_wms_order wms
+		JOIN bs_job_execute_status job on job.order_code = wms.order_code
+		join order_info info on info.order_id = wms.user_order_id
+		join order_package_product op on op.package_id = wms.user_package_id
+		join product p on p.product_id = op.product_id
+		where wms.in_type = 2 and wms.status = 'WMS_CREATE' and job.is_logistics_sent_to_ems = 1
+		order by wms.create_time asc
+	</select>
+
+</mapper>

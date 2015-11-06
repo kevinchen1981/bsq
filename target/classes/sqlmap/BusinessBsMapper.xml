@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hbcun.business.bs.dao.mapper.BusinessBsMapper">
+
+	<resultMap id="BsBaseList" type="com.hbcun.business.bs.entity.vo.BsBaseListVo">
+		<result column="order_code" property="orderCode"/>
+		<result column="user_order_id" property="orderId"/>
+		<result column="user_package_id" property="packageId"/>
+		<result column="status" property="status"/>
+		<result column="tms_order_code" property="tmsOrderCode"/>
+		<result column="is_ems_no_got" property="isEmsNoGot"/>
+		<result column="is_goods_declared_to_ep" property="isGoodsDeclareToEp"/>
+		<result column="is_logistics_sent_to_ems" property="isLogisticsSentToEms"/>
+		<result column="is_order_sent_to_ep" property="isOrderSentToEp"/>
+		<result column="is_payinfo_sent" property="isPayinfoSent"/>
+		<result column="create_time" property="createTime"/>
+		<result column="update_time" property="updateTime"/>
+		<result column="operator" property="operator"/>
+	</resultMap>
+	
+	<resultMap id="BsBhList" type="com.hbcun.business.bs.entity.vo.BsBhListVo" extends="BsBaseList">
+		<result column="is_order_sent_to_wms" property="isOrderSendToWms"/>
+	</resultMap>
+	
+	<resultMap id="BsZyList" type="com.hbcun.business.bs.entity.vo.BsZyListVo" extends="BsBaseList">
+		<result column="flight_number" property="flightNumber"/>
+		<result column="handler_date" property="handlerDate"/>
+	</resultMap>
+	
+	<sql id="BsBaseList_SQL">
+		wms.order_code, wms.user_order_id, wms.user_package_id, wms.`status`, wms.tms_order_code, wms.create_time, wms.update_time,
+		job.is_ems_no_got, job.is_goods_declared_to_ep, job.is_logistics_sent_to_ems, job.is_order_sent_to_ep, job.is_payinfo_sent, job.operator
+	</sql>
+	<select id="getBhScrollData" resultMap="BsBhList">
+		SELECT
+		<include refid="BsBaseList_SQL"/>,
+		job.is_order_sent_to_wms
+		from bs_wms_order wms
+		JOIN bs_job_execute_status job on job.order_code = wms.order_code
+		where wms.in_type = 1
+		<if test="param.orderId != null">
+			and wms.user_order_id = #{param.orderId}
+		</if>
+		<if test="param.packageId != null">
+			and wms.user_package_id = #{param.packageId}
+		</if>
+		<if test="param.status != null">
+			and wms.status = #{param.status}
+		</if>
+		order by wms.create_time desc
+		limit #{start}, #{pageSize}
+	</select>
+	<select id="getBhScrollDataCounts" resultType="int">
+		SELECT
+		count(*)
+		from bs_wms_order wms
+		JOIN bs_job_execute_status job on job.order_code = wms.order_code
+		where wms.in_type = 1
+		<if test="param.orderId != null">
+			and wms.user_order_id = #{param.orderId}
+		</if>
+		<if test="param.packageId != null">
+			and wms.user_package_id = #{param.packageId}
+		</if>
+		<if test="param.status != null">
+			and wms.status = #{param.status}
+		</if>
+	</select>
+	
+	<select id="getZyScrollData" resultMap="BsZyList">
+		SELECT
+		<include refid="BsBaseList_SQL"/>,
+		wms.flight_number, wms.handler_date
+		from bs_wms_order wms
+		JOIN bs_job_execute_status job on job.order_code = wms.order_code
+		where wms.in_type = 2
+		<if test="param.orderId != null">
+			and wms.user_order_id = #{param.orderId}
+		</if>
+		<if test="param.packageId != null">
+			and wms.user_package_id = #{param.packageId}
+		</if>
+		<if test="param.status != null">
+			and wms.status = #{param.status}
+		</if>
+		order by wms.create_time desc
+		limit #{start}, #{pageSize}
+	</select>
+	<select id="getZyScrollDataCounts" resultType="int">
+		SELECT
+		count(*)
+		from bs_wms_order wms
+		JOIN bs_job_execute_status job on job.order_code = wms.order_code
+		where wms.in_type = 2
+		<if test="param.orderId != null">
+			and wms.user_order_id = #{param.orderId}
+		</if>
+		<if test="param.packageId != null">
+			and wms.user_package_id = #{param.packageId}
+		</if>
+		<if test="param.status != null">
+			and wms.status = #{param.status}
+		</if>
+	</select>
+	
+	
+	<resultMap id="TaskBsOrderList" type="com.hbcun.business.bs.entity.vo.TaskBsOrderListVo">
+	    <id column="order_code" jdbcType="VARCHAR" property="orderCode" />
+	    <result column="status" jdbcType="VARCHAR" property="status" />
+	    <result column="user_order_id" jdbcType="CHAR" property="userOrderId" />
+	    <result column="user_package_id" jdbcType="CHAR" property="userPackageId" />
+	    <result column="in_type" jdbcType="TINYINT" property="inType" />
+  	</resultMap>
+  	<sql id="TaskBsOrderList_SQL">
+  		wms.order_code, wms.status, wms.user_order_id, wms.user_package_id, wms.in_type 
+  	</sql>
+  	
+	<select id="getOrderNotSendToWms" resultMap="TaskBsOrderList">
+		select
+		<include refid="TaskBsOrderList_SQL"/>
+		from bs_wms_order wms
+		join bs_job_execute_status job on job.order_code = wms.order_code
+		where wms.status = 'WMS_CREATE' and wms.in_type = 1
+	</select>
+	
+	<select id="getEMSNumNotGetList" resultMap="TaskBsOrderList">
+		select
+		<include refid="TaskBsOrderList_SQL"/>
+		from bs_wms_order wms
+		join bs_job_execute_status job on job.order_code = wms.order_code
+		where wms.status = 'WMS_CREATE' and wms.in_type = 2 and job.is_ems_no_got = 0
+	</select>
+	
+	<select id="getOrderNotSendToPayList" resultMap="TaskBsOrderList">
+		select
+		<include refid="TaskBsOrderList_SQL"/>
+		from bs_wms_order wms
+		join bs_job_execute_status job on job.order_code = wms.order_code
+		where ((wms.status in ('WMS_CREATE', 'WMS_SHIPPED') and wms.in_type = 2) or (wms.status = 'WMS_ACCEPT' and wms.in_type = 1))
+		and job.is_ems_no_got = 1 and job.is_payinfo_sent = 0
+	</select>
+	
+	<select id="getOrderNotSendToEmsList" resultMap="TaskBsOrderList">
+		select
+		<include refid="TaskBsOrderList_SQL"/>
+		from bs_wms_order wms
+		join bs_job_execute_status job on job.order_code = wms.order_code
+		where wms.status in ('WMS_CREATE', 'WMS_SHIPPED') and wms.in_type = 2
+		and job.is_logistics_sent_to_ems = 0 and job.is_ems_no_got = 1 and job.is_payinfo_sent = 1
+	</select>
+	
+	<select id="getOrderNotSentToEpList" resultMap="TaskBsOrderList">
+		select
+		<include refid="TaskBsOrderList_SQL"/>
+		from bs_wms_order wms
+		join bs_job_execute_status job on job.order_code = wms.order_code
+		where ((wms.status in ('WMS_CREATE', 'WMS_SHIPPED') and wms.in_type = 2) or (wms.status = 'WMS_ACCEPT' and wms.in_type = 1))
+		and job.is_order_sent_to_ep = 0 and job.is_logistics_sent_to_ems = 1
+		and job.is_ems_no_got = 1 and job.is_payinfo_sent = 1
+	</select>
+
+	<select id="getOrderListByStatus" resultMap="TaskBsOrderList">
+		select
+		<include refid="TaskBsOrderList_SQL"/>
+		from bs_wms_order wms
+		join bs_job_execute_status job on job.order_code = wms.order_code
+		where wms.status = #{status}
+	</select>
+
+	
+</mapper>
